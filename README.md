@@ -13,13 +13,13 @@
 
 
 ## Data
-*29,500 rows of metadata about scholarly publications on Coronavirus
-*13,202 JSON files – full text of publications
+* 29,500 rows of metadata about scholarly publications on Coronavirus
+* 13,202 JSON files – full text of publications
 
 ## Process
-Domain Problem Understanding
-Data Understanding
-Data Preparation
-Modeling
-Evaluation
-Deployment
+1 Domain Problem Understanding
+2 Data Understanding
+3 Data Preparation
+4 Modeling
+5 Evaluation
+6 Deployment
