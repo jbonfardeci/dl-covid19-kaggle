@@ -17,9 +17,9 @@
 * 13,202 JSON files – full text of publications
 
 ## Process
-1 Domain Problem Understanding
-2 Data Understanding
-3 Data Preparation
-4 Modeling
-5 Evaluation
-6 Deployment
+* Domain Problem Understanding
+* Data Understanding
+* Data Preparation
+* Modeling
+* Evaluation
+* Deployment
