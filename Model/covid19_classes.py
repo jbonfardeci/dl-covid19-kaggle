@@ -1,5 +1,4 @@
 from pyorient.ogm import declarative
-import json
 
 # Initialize Registries
 Node = declarative.declarative_node()
@@ -9,57 +8,33 @@ class Paper(Node):
     """
     Paper Vertex
     """
-    def __init__(self, paper_id=None, title=None):
+    def __init__(self, paper_id:str):
         self.paper_id = paper_id
-        self.title = title
 
-    abstract = None
-    body_text = None
-
-    def to_json(self):
-        return json.dumps(self.__dict__)
-
+    title:str = None
+    abstract:str = None
+    body_text:str = None
 
 class Author(Node):
     """
     Author Vertex
     """
-    def __init__(self, first=None, last=None):
-        self.first = first
-        self.last = last
-
-    middle = None
-    suffix = None
-    email = None
-
-    def to_json(self):
-        return json.dumps(self.__dict__)
+    first:str = None
+    last:str = None
+    middle:str = None
+    suffix:str = None
+    email:str = None
+    hash_id:str = None
 
 class BibEntry(Node):
     """
     BibEntry Vertex
     """
-
-    def __init__(self, paper_id):
+    def __init__(self, paper_id:str):
         self.paper_id = paper_id
 
-    ref_id = None
-    title = None
-    year = None
-    venue = None
-    issn = None
-
-class AuthorWrote(Relationship):
-    pass 
-
-class AuthorCited(Relationship):
-    pass
-
-class Citation(Relationship):
-    pass
-
-
-
-
-
-
+    ref_id:str = None
+    title:str = None
+    year:str = None
+    venue:str = None
+    issn:str = None
