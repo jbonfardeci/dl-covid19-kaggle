@@ -28,6 +28,8 @@ AUTHOR_CLUSTER = 25
 AUTHOR_BIB_ENTRY_CLUSTER = 24
 PAPER_AUTHOR_CLUSTER = 22
 PAPER_BIB_ENTRY_CLUSTER = 23
+AFFILIATION_CLUSTER = 27
+AUTHOR_AFFILIATION_CLUSTER = 28
 FOLDER = "/home/spark/Documents/repos/covid19kaggle/2020-03-13/"
 
 # Open DB connection
@@ -36,7 +38,7 @@ socket.connect()
 client = OrientDB(socket)
 client.db_open(DATABASE_NAME, DB_USER, DB_PWD) # change to your database name
 
-def is_rid(rid:str):
+def is_rid(rid:str) -> bool:
     rx = re.match("^#\d+:\d+$", rid)
     if rx:
         return rx.group() == rid 
@@ -106,16 +108,73 @@ def create_paper_bib_edge(paper_rid:str, bib_rid:str) -> OrientRecord:
 
     return None
 
-def create_author_bib_edge(author_rid:str, bib_rid:str) -> OrientRecord:
+def create_author_bib_edge(bib_rid:str, author_rid:str) -> OrientRecord:
     if is_rid(author_rid) and is_rid(bib_rid):
         # edges = client.query(str.format("SELECT FROM AuthorBibEntry WHERE IN = {0} AND OUT = {1}", author_rid, bib_rid))
         # if len(edges) > 0:
         #     return edges[0]
 
-        edge_sql = str.format("CREATE EDGE AuthorBibEntry FROM {0} TO {1}", author_rid, bib_rid)
+        edge_sql = str.format("CREATE EDGE AuthorBibEntry FROM {0} TO {1}", bib_rid, author_rid)
         return client.command(edge_sql)
 
     return None
+
+def create_author_affiliation_edge(affiliation_rid:str, author_rid:str) -> OrientRecord:
+    if is_rid(author_rid) and is_rid(affiliation_rid):
+        edge_sql = str.format("CREATE EDGE AuthorAffiliation FROM {0} TO {1}", author_rid, affiliation_rid)
+        return client.command(edge_sql)
+
+    return None
+
+def insert_affiliation(author_rid:str, affiliation:Dict) -> str: 
+
+    if 'laboratory' not in affiliation and 'institution' not in affiliation:
+        return None
+
+    if is_empty(affiliation['laboratory']) and is_empty(affiliation['institution']):
+        return None
+
+    record: OrientRecord = None
+
+    lab:str = trim(affiliation['laboratory']) if not is_empty(affiliation['laboratory']) else ''
+
+    inst:str = trim(affiliation['institution']) if not is_empty(affiliation['institution']) else ''
+
+    postCode:str = None 
+    settlement:str = None
+    region:str = None
+    country:str = None
+
+    if 'location' in affiliation:
+        location = affiliation['location']
+        postCode = trim(location['postCode']) if 'postCode' in location else None
+        settlement= trim(location['settlement']) if 'settlement' in location else None
+        region = trim(location['region']) if 'region' in location else None
+        country = trim(location['country']) if 'country' in location else None
+
+    hash_id = hashlib.md5( str.format("{0}{1}", inst, lab).encode() ).hexdigest()
+
+    affiliations: List = client.query(str.format("select * from Affiliation where hash_id = '{0}'", hash_id))
+
+    if len(affiliations) > 0:
+        record = affiliations[0]
+    else:
+        record = client.record_create(AFFILIATION_CLUSTER ,{
+            "@Affiliation": {
+                "laboratory": lab if not is_empty(lab) else None,
+                "institution": inst if not is_empty(inst) else None,
+                "postCode": postCode,
+                "settlement": settlement,
+                "region": region,
+                "country": country,
+                "hash_id": hash_id
+            }
+        })
+
+    affiliation_rid:str = get_rid(record)
+    create_author_affiliation_edge(author_rid, affiliation_rid)
+
+    return affiliation_rid
 
 def insert_author(auth:Dict) -> str:
     
@@ -154,6 +213,9 @@ def insert_author(auth:Dict) -> str:
         record = client.record_create(AUTHOR_CLUSTER, vertex)
 
     author_rid = get_rid(record)
+
+    if 'affiliation' in auth:
+        insert_affiliation(author_rid, auth['affiliation'])
 
     return author_rid
     # /def insert_author:
@@ -237,7 +299,7 @@ def insert_paper(data) -> str:
 
 # TEST
 def unit_test():
-    test_paper = read_json(FOLDER+"biorxiv_medrxiv/biorxiv_medrxiv/0a43046c154d0e521a6c425df215d90f3c62681e.json")
+    test_paper = read_json(FOLDER+"biorxiv_medrxiv/biorxiv_medrxiv/00d16927588fb04d4be0e6b269fc02f0d3c2aa7b.json")
     paper_rid = insert_paper(test_paper)
     print(paper_rid)
     
