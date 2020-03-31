@@ -1,4 +1,6 @@
 from pyorient.ogm import declarative
+from typing import Dict
+import json
 
 # Initialize Registries
 Node = declarative.declarative_node()
@@ -14,6 +16,16 @@ class Paper(Node):
     title:str = None
     abstract:str = None
     body_text:str = None
+    doi: str = None
+    has_full_text: bool = False
+    journal: str = None
+    license: str = None
+    ms_paper_id: str = None
+    pmcid: str = None
+    pubmed_id: str = None
+    source_x: str = None
+    who_covidence: str = None
+    publish_time: str = None
 
 class Author(Node):
     """

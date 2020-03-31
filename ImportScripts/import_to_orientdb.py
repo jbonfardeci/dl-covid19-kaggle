@@ -5,6 +5,11 @@ import hashlib
 from pyorient import OrientDB, OrientRecord
 from PySocket import PySocket
 from typing import Dict, List
+import pandas as pd
+import math
+import sys
+sys.path.append('/home/spark/Documents/repos/dl-covid19-kaggle-contest/Model/')
+from covid19_classes import Paper
 
 """
 Import JSON articles into OrientDB (WIP)
@@ -38,6 +43,15 @@ socket.connect()
 client = OrientDB(socket)
 client.db_open(DATABASE_NAME, DB_USER, DB_PWD) # change to your database name
 
+
+
+def to_bool(s):
+    rx = re.match("^(1|true|yes)$", trim(str(s).lower()))
+    if rx:
+        return rx.group() in ['1', 'yes', 'true']
+
+    return False
+    
 def is_rid(rid:str) -> bool:
     rx = re.match("^#\d+:\d+$", rid)
     if rx:
@@ -46,10 +60,19 @@ def is_rid(rid:str) -> bool:
     return False
 
 def trim(s) -> str:
-    return re.sub("(^s\+|\s+$)", "", s)
+    return re.sub("(^s\+|\s+$)", "", str(s))
 
 def is_empty(s) -> bool:
     return s == None or s == 'NULL' or trim(s) == '' 
+
+def clean_str(s:str) -> str:
+    if s == None:
+        return s
+
+    if str(s) == 'nan':
+        return None
+
+    return trim(str(s)) if not is_empty(str(s)) else None 
 
 def hash_author(first:str, last:str, middle:str=None, suffix:str=None, email:str=None) -> str:
     f = '' if is_empty(first) else trim(first) 
@@ -269,18 +292,30 @@ def insert_paper(data) -> str:
 
     full_text = " ".join(body_text)
 
+    paper = Paper(paper_id)
+    paper.title = title
+    paper.abstract = abstract
+    paper.body_text = full_text
+    paper.title_short = title_short
+
     vertex = {
-        "@Paper": {
-            "paper_id": paper_id,
-            "title": title,
-            "abstract": abstract,
-            "body_text": full_text,
-            "title_short": title_short
-        }
+        "@Paper": paper.__dict__
     }
 
-    record: OrientRecord = client.record_create(PAPER_CLUSTER, vertex)
-    paper_rid: str = get_rid(record)
+    paper_rid:str = None
+    record: OrientRecord = None
+
+    papers = client.query(str.format("select * from Paper where paper_id = '{0}'", paper_id))
+    # update
+    if papers != None and len(papers) > 0:
+        record = papers[0]
+        paper_rid = record._rid
+        version = record._version
+        client.record_update(paper_rid, paper_rid, vertex, version)
+    # insert
+    else:
+        record = client.record_create(PAPER_CLUSTER, vertex)
+        paper_rid = get_rid(record)
 
     # authors
     for auth in authors:      
@@ -308,7 +343,7 @@ def unit_test():
 # unit_test()
 
 # Load JSON articles
-def import_all():
+def import_json_files():
     docs = read_files(FOLDER)
     paper_rids = []
     for doc in docs:
@@ -319,6 +354,137 @@ def import_all():
 
     print("Imported", len(paper_rids), "documents.")
 
-import_all()
+def authors_to_list(s:str) -> List:
+    """
+    Parse the different list types of authors in CSV data.
+    """
+    s = str(s)
+
+    def _to_dict(s):
+        if s == None:
+            return {} 
+
+        if s.find(',') > -1:
+            names = list( map(trim, s.split(',')) )
+            return {
+                "first": names[1],
+                "last": names[0]
+            }
+
+        return {
+            "first": None,
+            "last": trim(s)
+        }
+
+    def _to_json(s):
+        try:
+            return json.loads(s)
+        except json.decoder.JSONDecodeError:
+            print(s)
+            return []
+
+    if s == None or len(trim(s)) == 0:
+        return []
+
+    if s.find("[") > -1:
+        s = re.sub("[^\[\]a-z0-9A-Z\.\-\'\"\,\s]", "", s)
+        s = s.replace("['", "[\"")
+        s = s.replace("', '", "\", \"")
+        s = s.replace("']", "\"]")
+        s = s.replace("\", '", "\", \"")
+        s = s.replace("', \"", "\", \"")
+        s = s.replace("']", "\"]")
+        s = s.replace(", None", "")
+        s = s.replace("']", "\"]")
+        s = s.replace("\\xa0", " ")
+        s = s.replace("None, ", "")
+        s = s.replace("['", "[\"")
+        
+        lst = _to_json(s)
+        return list( map(_to_dict, lst) )
+
+    elif s.find(";") > -1:
+        return list( map(_to_dict, s.split(';')) )
+    else:
+        return [_to_dict(s)]
+    
+    return s
+
+def insert_csv_paper_model(index, row):
+
+    def _insert(vertex):
+        record = client.record_create(PAPER_CLUSTER, vertex)  
+        return get_rid(record)
+
+    def _is_correction(title:str) -> bool:
+        # update paper if title starts with "Correction:..."
+        rx_corrected = re.match("^correction:", str(title).lower())
+        return rx_corrected and rx_corrected.group() in ['correction:']
+
+    paper_id:str = str(row['sha'])
+    if paper_id == None or len(paper_id) < 40:
+        paper_id = str.format("na_paper_id_{0}", index)
+
+    title = clean_str(row.title)
+
+    # don't import retracted papers
+    rx_retracted = re.match("^retracted:", str(title).lower())
+    if rx_retracted and rx_retracted.group() in ['retracted:']:
+        return None
+
+    paper: Paper = Paper(paper_id)
+    paper.title = title
+    paper.doi = clean_str(row.doi)
+    paper.source_x = clean_str(row.source_x)
+    paper.pmcid = clean_str(row.pmcid)
+    paper.pubmed_id = clean_str(row.pubmed_id)
+    paper.license = clean_str(row.license)
+    paper.abstract = clean_str(row.abstract)
+    paper.publish_time = clean_str(row.publish_time)
+    paper.journal = clean_str(row.journal)
+    paper.ms_paper_id = clean_str(row['Microsoft Academic Paper ID'])
+    paper.who_covidence = clean_str(row['WHO #Covidence'])
+    paper.has_full_text = to_bool(row.has_full_text)
+    authors:List = authors_to_list(row.authors)
+
+    vertex = {
+        "@Paper": paper.__dict__
+    }
+
+    records = client.query(str.format("select * from Paper where paper_id = '{0}'", paper_id))
+
+    # update
+    if records != None and len(records) > 0:
+        record: OrientRecord = records[0]
+        paper_rid = record._rid
+        version = record._version
+        # don't update if the corrected paper is already in the database
+        if _is_correction(record.title) and not _is_correction(paper.title):
+            return record._rid
+        else:        
+            success = client.record_update(paper_rid, paper_rid, vertex, version)
+            return paper_rid
+    
+    # insert
+    paper_rid = _insert(vertex)
+
+    for auth in authors:
+        author_rid = insert_author(auth)
+        create_paper_author_edge(paper_rid, author_rid)
+
+    return paper_rid
+
+def import_csv_metadata():
+    file_path = "/home/spark/Documents/repos/dl-covid19-kaggle-contest/Data/all_sources_metadata_2020-03-13_clean.csv"
+    df = pd.read_csv(file_path)
+    for index, row in df.iterrows():
+        paper_rid = insert_csv_paper_model(index, row)
+        print(paper_rid)
+
+# step 1
+#import_csv_metadata()
+
+# step 2 - update papers with body text from JSON files, etc.
+import_json_files()
 
 client.close()
