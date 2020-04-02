@@ -119,59 +119,40 @@ def create_publishedby_edge(paper_rid:str, journal_rid:str) -> str:
     if not is_rid(paper_rid) or not is_rid(journal_rid):
         return None
 
-    record:OrientRecord = client.query("SELECT * FROM PublishedBy WHERE paper = {0} and journal = {1}", \
+    record:OrientRecord = client.query("SELECT * FROM PublishedBy WHERE FROM = {0} and TO = {1}", \
         paper_rid, journal_rid)
 
     if record and len(record) > 0:
         return record[0]._rid
 
-    o = PublishedBy()
-    o.journal = journal_rid
-    o.paper = paper_rid
-
-    record = client.record_create(PUBLISHEDBY_CLUSTER, {
-        "@PublishedBy": o.__dict__
-    })
+    record = client.command(str.format("CREATE EDGE PublishedBy FROM {0} TO {1}", paper_rid, journal_rid))
     return record._rid
 
 def create_authoredby_edge(author_rid:str, paper_rid:str) -> str:
     if not is_rid(author_rid) or not is_rid(paper_rid):
         return None
 
-    record: OrientRecord = client.query(str.format("SELECT * FROM AuthoredBy WHERE author = {0} and paper = {1}", \
+    #return None
+    record: OrientRecord = client.query(str.format("SELECT * FROM AuthoredBy WHERE FROM = {0} and TO = {1}", \
         author_rid, paper_rid))
 
     if record and len(record) > 0:
         return record[0]._rid
 
-    o = AuthoredBy()
-    o.paper = paper_rid
-    o.author = author_rid
-
-    record = client.record_create(AUTHOREDBY_CLUSTER, {
-        "@AuthoredBy": o.__dict__
-    })
-
-    return record._rid
+    record = client.command(str.format("CREATE EDGE AuthoredBy FROM {0} TO {1}", paper_rid, author_rid))
+    return get_rid(record)
 
 def create_affiliation_edge(author_rid:str, institution_rid:str) -> str:
     if not is_rid(author_rid) or not is_rid(institution_rid):
         return None
 
-    record: OrientRecord = client.query("SELECT * FROM Affiliation WHERE institution = {0} and author = {1}", \
+    record: OrientRecord = client.query("SELECT * FROM Affiliation WHERE FROM = {0} and TO = {1}", \
         institution_rid, author_rid)
 
     if record and len(record) > 0:
         return record[0]._rid
 
-    o = Affiliation()
-    o.institution = institution_rid
-    o.author = author_rid
-
-    record = client.record_create(AFFILIATION_CLUSTER, {
-        "@Affiliation": o.__dict__
-    })
-
+    record = client.command(str.format("CREATE EDGE Affiliation FROM {0} TO {1}", author_rid, institution_rid))
     return record._rid
 
 def insert_institution(affiliation:Dict) -> str:
@@ -252,8 +233,8 @@ def create_citation_edges(paper_rid:str, bib:Dict) -> List:
     journal_name = clean_str(bib['venue'])
 
     def _find_edge(author_rid:str) -> str:
-        record:OrientRecord = client.query("SELECT * FROM Citation WHERE ref_id = '{0}' AND author = {1} AND paper = {2}", \
-            ref_id, author_rid, paper_rid)
+        record:OrientRecord = client.query("SELECT * FROM Citation WHERE ref_id = '{0}' AND FROM = {1} AND TO = {2}", \
+            ref_id, paper_rid, author_rid)
 
         if record and len(record) > 0:
             return record[0]._rid
@@ -261,18 +242,11 @@ def create_citation_edges(paper_rid:str, bib:Dict) -> List:
         return None
 
     def _create(author_rid:str) -> str:      
-        o = Citation()
-        o.author = author_rid
-        o.paper = paper_rid
-        o.ref_id = ref_id
-        o.title = clean_str(bib['title']),
-        o.year = to_int(bib['year'])
-        o.issn = clean_str(bib['issn'])
-
-        record = client.record_create(CITATION_CLUSTER, {
-            "@Citation": o.__dict__
-        })
-
+        title = clean_str(bib['title']),
+        year = to_int(bib['year'])
+        issn = clean_str(bib['issn'])
+        record = client.command(str.format("CREATE EDGE Citation FROM {0} TO {1} SET ref_id = '{2}', title = '{3}', year = {4}, issn = '{5}'", \
+            paper_rid, author_rid, ref_id, title, year, issn))
         return record._rid
 
     rids = []
@@ -515,7 +489,9 @@ def insert_csv_paper_model(index, row):
         authors:List = authors_to_list(row.authors)
         for auth in authors:
             author_rid = insert_author(auth)
-            create_authoredby_edge(author_rid, paper_rid)
+            print(author_rid)
+            if is_rid(author_rid):
+                create_authoredby_edge(author_rid, paper_rid)
 
     return paper_rid
 
