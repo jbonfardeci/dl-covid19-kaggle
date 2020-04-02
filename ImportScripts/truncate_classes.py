@@ -3,7 +3,7 @@ from PySocket import PySocket
 
 HOST = "localhost"
 PORT = 2424
-DATABASE_NAME = "Covid19"
+DATABASE_NAME = "Covid19Dev"
 DB_USER = "admin"
 DB_PWD = "admin"
 
@@ -14,15 +14,15 @@ def truncate_clusters():
     client = OrientDB(socket)
     client.db_open(DATABASE_NAME, DB_USER, DB_PWD) # change to your database name
 
-    client.command("TRUNCATE CLASS Affiliation UNSAFE")
-    client.command("TRUNCATE CLASS Author UNSAFE")
-    client.command("TRUNCATE CLASS BibEntry UNSAFE")
+    client.command("TRUNCATE CLASS Journal UNSAFE")
     client.command("TRUNCATE CLASS Paper UNSAFE")
+    client.command("TRUNCATE CLASS Author UNSAFE")
+    client.command("TRUNCATE CLASS Institution UNSAFE")
 
-    client.command("TRUNCATE CLASS AuthorBibEntry UNSAFE")
-    client.command("TRUNCATE CLASS AuthorAffiliation UNSAFE")
-    client.command("TRUNCATE CLASS AuthorPaper UNSAFE")
-    client.command("TRUNCATE CLASS BibEntryPaper UNSAFE")
+    client.command("TRUNCATE CLASS PublishedBy UNSAFE")
+    client.command("TRUNCATE CLASS AuthoredBy UNSAFE")
+    client.command("TRUNCATE CLASS Affiliation UNSAFE")
+    client.command("TRUNCATE CLASS Citation UNSAFE")
 
     print('All clusters truncated.')
 

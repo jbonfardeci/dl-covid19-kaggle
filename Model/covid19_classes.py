@@ -1,4 +1,5 @@
-from pyorient.ogm import declarative
+from pyorient.ogm import declarative, Config
+from pyorient.ogm.graph import String, Boolean, Link, Float
 from typing import Dict
 import json
 
@@ -6,47 +7,73 @@ import json
 Node = declarative.declarative_node()
 Relationship = declarative.declarative_relationship()
 
-class Paper(Node):
-    """
-    Paper Vertex
-    """
-    def __init__(self, paper_id:str):
-        self.paper_id = paper_id
+class Journal(Node):
+    name = String()
+    impact_factor = Float()
 
-    title:str = None
-    abstract:str = None
-    body_text:str = None
-    doi: str = None
-    has_full_text: bool = False
-    journal: str = None
-    license: str = None
-    ms_paper_id: str = None
-    pmcid: str = None
-    pubmed_id: str = None
-    source_x: str = None
-    who_covidence: str = None
-    publish_time: str = None
+class Paper(Node):
+    paper_id = String()
+    title = String()
+    title_short = String()
+    abstract = String()
+    body_text = String()
+    doi = String()
+    has_full_text = Boolean()
+    license = String()
+    ms_paper_id = String()
+    pmcid = String()
+    pubmed_id = String()
+    source_x = String()
+    who_covidence = String()
+    publish_time = String()
 
 class Author(Node):
-    """
-    Author Vertex
-    """
-    first:str = None
-    last:str = None
-    middle:str = None
-    suffix:str = None
-    email:str = None
-    hash_id:str = None
+    hash_id = String()
+    first = String()
+    last = String()
+    middle = String()
+    suffix = String()
+    email = String()
+    impact_factor = Float()
 
-class BibEntry(Node):
-    """
-    BibEntry Vertex
-    """
-    def __init__(self, paper_id:str):
-        self.paper_id = paper_id
+class Institution(Node):
+    hash_id = String()
+    laboratory = String()
+    institution_name = String()
+    impact_factor = Float()
 
-    ref_id:str = None
-    title:str = None
-    year:str = None
-    venue:str = None
-    issn:str = None
+class PublishedBy(Relationship):
+    # 1-n
+    # from: Journal, to: Paper
+    # journal paper is published in
+    # journal has many papers
+    _in = Link(Journal)
+    _out = Link(Paper)
+
+class AuthoredBy(Relationship):
+    # 1-n
+    # from: Paper, to: Author
+    # author who co-wrote paper
+    # authors write many papers
+    _in = Link(Paper)
+    _out = Link(Author)
+
+class Affiliation(Relationship):
+    # 1-n
+    # from: Institution, to: Author
+    # author affiliated with institution
+    # institution has many authors
+    institution = Link(Institution)
+    author = Link(Author)
+
+class Citation(Relationship):
+    # 1-n
+    # from: Paper, to: Author
+    # author cited by paper
+    # paper cites many authors and institutions
+    _in = Link(Author)
+    _out = Link(Paper)
+    ref_id = String()
+    title = String()
+    year = String()
+    issn = String()

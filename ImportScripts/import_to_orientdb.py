@@ -9,7 +9,7 @@ import pandas as pd
 import math
 import sys
 sys.path.append('/home/spark/Documents/repos/dl-covid19-kaggle-contest/Model/')
-from covid19_classes import Paper
+from covid19_classes import Journal, Paper, Author, Institution, Affiliation, AuthoredBy, PublishedBy, Citation
 
 """
 Import JSON articles into OrientDB (WIP)
@@ -24,17 +24,21 @@ PyOrient docs - https://orientdb.com/docs/3.0.x/pyorient/PyOrient.html
 # change to your params
 HOST = "localhost"
 PORT = 2424
-DATABASE_NAME = "Covid19"
+DATABASE_NAME = "Covid19Dev"
 DB_USER = "admin"
 DB_PWD = "admin"
-PAPER_CLUSTER = 21
-BIB_ENTRY_CLUSTER = 26
-AUTHOR_CLUSTER = 25
-AUTHOR_BIB_ENTRY_CLUSTER = 24
-PAPER_AUTHOR_CLUSTER = 22
-PAPER_BIB_ENTRY_CLUSTER = 23
-AFFILIATION_CLUSTER = 27
-AUTHOR_AFFILIATION_CLUSTER = 28
+
+#vertex clusters
+JOURNAL_CLUSTER = 21 # 'JournalCluster'
+PAPER_CLUSTER = 22 #'PaperCluster'
+AUTHOR_CLUSTER = 23 # 'AuthorCluster'
+INSTITUTION_CLUSTER = 24 # 'InstitutionCluster'
+# edge clusters
+AUTHOREDBY_CLUSTER = 26 # 'AuthoredByCluster'
+PUBLISHEDBY_CLUSTER = 25 # 'PublishedByCluster'
+AFFILIATION_CLUSTER = 27 # 'AffiliationCluster'
+CITATION_CLUSTER = 28 # 'CitationCluster'
+
 FOLDER = "/home/spark/Documents/repos/covid19kaggle/2020-03-13/"
 
 # Open DB connection
@@ -42,8 +46,6 @@ socket = PySocket(HOST, PORT)
 socket.connect()
 client = OrientDB(socket)
 client.db_open(DATABASE_NAME, DB_USER, DB_PWD) # change to your database name
-
-
 
 def to_bool(s):
     rx = re.match("^(1|true|yes)$", trim(str(s).lower()))
@@ -74,6 +76,13 @@ def clean_str(s:str) -> str:
 
     return trim(str(s)) if not is_empty(str(s)) else None 
 
+def to_int(s:str) -> int:
+    try:
+        n = int(clean_str(s))
+        return n
+    except:
+        return None
+
 def hash_author(first:str, last:str, middle:str=None, suffix:str=None, email:str=None) -> str:
     f = '' if is_empty(first) else trim(first) 
     l = '' if is_empty(last) else trim(last)
@@ -84,6 +93,10 @@ def hash_author(first:str, last:str, middle:str=None, suffix:str=None, email:str
     combined = str.format("{0}{1}{2}{3}{4}", f, l, m, s, e)
     hashed = hashlib.md5(combined.encode())
     return hashed.hexdigest()
+
+def hash_strings(strings:List) -> str:
+    a = [trim(s) for s in strings if not is_empty(s)]
+    return hashlib.md5(''.join(a).encode()).hexdigest()
 
 def convert_to_json(contents: str) -> Dict:
     return json.loads(contents)
@@ -99,185 +112,189 @@ def read_files(path: str) -> List:
 
     return file_list
 
-def parse_cluster_id(rid) -> Dict:
-    a = rid.split(':')
-    return {
-        'cluster_id': a[0],
-        'id': a[1]
-    }
-
 def get_rid(record: OrientRecord) -> str:
     return str(record.__dict__['_OrientRecord__rid'])
 
-def create_paper_author_edge(paper_rid:str, author_rid:str) -> OrientRecord:
-    if is_rid(paper_rid) and is_rid(author_rid):
-        # edges = client.query(str.format("SELECT FROM AuthorPaper WHERE IN = {0} AND OUT = {1}", author_rid, paper_rid))
-        # if len(edges) > 0:
-        #     return edges[0]
+def create_publishedby_edge(paper_rid:str, journal_rid:str) -> str:
+    if not is_rid(paper_rid) or not is_rid(journal_rid):
+        return None
 
-        edge_sql = str.format("CREATE EDGE AuthorPaper FROM {0} TO {1}", author_rid, paper_rid)
-        return client.command(edge_sql)
+    record:OrientRecord = client.query("SELECT * FROM PublishedBy WHERE paper = {0} and journal = {1}", \
+        paper_rid, journal_rid)
 
-    return None
+    if record and len(record) > 0:
+        return record[0]._rid
 
-def create_paper_bib_edge(paper_rid:str, bib_rid:str) -> OrientRecord:
-    if is_rid(paper_rid) and is_rid(bib_rid):
-        # edges = client.query(str.format("SELECT FROM BibEntryPaper WHERE IN = {0} AND OUT = {1}", bib_rid, paper_rid))
-        # if len(edges) > 0:
-        #     return edges[0]
+    o = PublishedBy()
+    o.journal = journal_rid
+    o.paper = paper_rid
 
-        edge_sql = str.format("CREATE EDGE BibEntryPaper FROM {0} TO {1}", bib_rid, paper_rid)
-        return client.command(edge_sql)
+    record = client.record_create(PUBLISHEDBY_CLUSTER, {
+        "@PublishedBy": o.__dict__
+    })
+    return record._rid
 
-    return None
+def create_authoredby_edge(author_rid:str, paper_rid:str) -> str:
+    if not is_rid(author_rid) or not is_rid(paper_rid):
+        return None
 
-def create_author_bib_edge(bib_rid:str, author_rid:str) -> OrientRecord:
-    if is_rid(author_rid) and is_rid(bib_rid):
-        # edges = client.query(str.format("SELECT FROM AuthorBibEntry WHERE IN = {0} AND OUT = {1}", author_rid, bib_rid))
-        # if len(edges) > 0:
-        #     return edges[0]
+    record: OrientRecord = client.query(str.format("SELECT * FROM AuthoredBy WHERE author = {0} and paper = {1}", \
+        author_rid, paper_rid))
 
-        edge_sql = str.format("CREATE EDGE AuthorBibEntry FROM {0} TO {1}", bib_rid, author_rid)
-        return client.command(edge_sql)
+    if record and len(record) > 0:
+        return record[0]._rid
 
-    return None
+    o = AuthoredBy()
+    o.paper = paper_rid
+    o.author = author_rid
 
-def create_author_affiliation_edge(affiliation_rid:str, author_rid:str) -> OrientRecord:
-    if is_rid(author_rid) and is_rid(affiliation_rid):
-        edge_sql = str.format("CREATE EDGE AuthorAffiliation FROM {0} TO {1}", author_rid, affiliation_rid)
-        return client.command(edge_sql)
+    record = client.record_create(AUTHOREDBY_CLUSTER, {
+        "@AuthoredBy": o.__dict__
+    })
 
-    return None
+    return record._rid
 
-def insert_affiliation(author_rid:str, affiliation:Dict) -> str: 
+def create_affiliation_edge(author_rid:str, institution_rid:str) -> str:
+    if not is_rid(author_rid) or not is_rid(institution_rid):
+        return None
+
+    record: OrientRecord = client.query("SELECT * FROM Affiliation WHERE institution = {0} and author = {1}", \
+        institution_rid, author_rid)
+
+    if record and len(record) > 0:
+        return record[0]._rid
+
+    o = Affiliation()
+    o.institution = institution_rid
+    o.author = author_rid
+
+    record = client.record_create(AFFILIATION_CLUSTER, {
+        "@Affiliation": o.__dict__
+    })
+
+    return record._rid
+
+def insert_institution(affiliation:Dict) -> str:
 
     if 'laboratory' not in affiliation and 'institution' not in affiliation:
         return None
 
-    if is_empty(affiliation['laboratory']) and is_empty(affiliation['institution']):
+    laboratory = clean_str(affiliation['laboratory'])
+    institution = clean_str(affiliation['institution'])
+
+    if is_empty(laboratory) and is_empty(institution):
         return None
 
-    record: OrientRecord = None
+    hash_id = hash_strings([institution, laboratory])
+    record: OrientRecord = client.query(str.format("SELECT * FROM Institution WHERE hash_id = '{0}'", hash_id))
 
-    lab:str = trim(affiliation['laboratory']) if not is_empty(affiliation['laboratory']) else ''
+    if record and len(record) > 0:
+        return record[0]._rid
+    
+    o = Institution()
+    o.hash_id = hash_id
+    o.laboratory = laboratory
+    o.institution_name = institution
 
-    inst:str = trim(affiliation['institution']) if not is_empty(affiliation['institution']) else ''
+    record = client.record_create(INSTITUTION_CLUSTER, {
+        "@Institution": o.__dict__
+    })
 
-    postCode:str = None 
-    settlement:str = None
-    region:str = None
-    country:str = None
-
-    if 'location' in affiliation:
-        location = affiliation['location']
-        postCode = trim(location['postCode']) if 'postCode' in location else None
-        settlement= trim(location['settlement']) if 'settlement' in location else None
-        region = trim(location['region']) if 'region' in location else None
-        country = trim(location['country']) if 'country' in location else None
-
-    hash_id = hashlib.md5( str.format("{0}{1}", inst, lab).encode() ).hexdigest()
-
-    affiliations: List = client.query(str.format("select * from Affiliation where hash_id = '{0}'", hash_id))
-
-    if len(affiliations) > 0:
-        record = affiliations[0]
-    else:
-        record = client.record_create(AFFILIATION_CLUSTER ,{
-            "@Affiliation": {
-                "laboratory": lab if not is_empty(lab) else None,
-                "institution": inst if not is_empty(inst) else None,
-                "postCode": postCode,
-                "settlement": settlement,
-                "region": region,
-                "country": country,
-                "hash_id": hash_id
-            }
-        })
-
-    affiliation_rid:str = get_rid(record)
-    create_author_affiliation_edge(author_rid, affiliation_rid)
-
-    return affiliation_rid
+    return record._rid
 
 def insert_author(auth:Dict) -> str:
     
-    first: str = trim(auth['first']) if ('first' in auth and not is_empty(auth['first'])) else None
+    def _find(hash_id:str) -> str:
+        record:OrientRecord = client.query(str.format("SELECT * FROM Author WHERE hash_id = '{0}'", hash_id))
     
+        if record and len(record) > 0:
+            return record[0]._rid
+
+        return None
+
+    def _create(hash_id, first, last, middle, suffix, email):
+        o = Author()
+        o.hash_id = hash_id
+        o.first = first
+        o.middle = middle
+        o.last = last
+        o.suffix = suffix
+        o.email = email
+        record = client.record_create(AUTHOR_CLUSTER, {
+            "@Author": o.__dict__
+        })
+        return record._rid
+
+    first: str = trim(auth['first']) if ('first' in auth and not is_empty(auth['first'])) else None  
     last: str = trim(auth['last']) if ('last' in auth and not is_empty(auth['last'])) else None
-
     suffix: str = trim(auth['suffix']) if ('suffix' in auth and not is_empty(auth['suffix'])) else None
-
-    email: str = trim(auth['email']) if ('email' in auth and not is_empty(auth['email'])) else None
-    
+    email: str = trim(auth['email']) if ('email' in auth and not is_empty(auth['email'])) else None   
     middle: str = None
     if 'middle' in auth and len(auth['middle']) > 0:
         middle = ".".join( list( map(trim, auth['middle']) ) )
 
-    hash_id = hash_author(first, last, middle, suffix, email)
-    
-    # Check if author already exists, and insert if not.
-    authors: List = client.query(str.format("select * from Author where hash_id = '{0}'", hash_id))
-    
-    record:OrientRecord = None
+    hash_id = hash_strings([first, last, middle, suffix, email])   
+    author_rid:str = _find(hash_id)
 
-    if len(authors) > 0:
-        record = authors[0]
-    else:
-        vertex = {
-            "@Author": {
-                "first": first,
-                "middle": middle,
-                "last": last,
-                "email": email,
-                "suffix": suffix,
-                "hash_id": hash_id
-            }
-        }
-        record = client.record_create(AUTHOR_CLUSTER, vertex)
-
-    author_rid = get_rid(record)
+    if author_rid == None:
+        author_rid = _create(hash_id, first, last, middle, suffix, email)
 
     if 'affiliation' in auth:
-        insert_affiliation(author_rid, auth['affiliation'])
+        institution_rid = insert_institution(auth['affiliation'])
+        create_affiliation_edge(author_rid, institution_rid)
 
     return author_rid
     # /def insert_author:
 
-def insert_bib_entry(paper_id:str, bib:Dict) -> str:
+def create_citation_edges(paper_rid:str, bib:Dict) -> List:
 
-    ref_id = bib['ref_id']
-    vertex = {
-        "@BibEntry": {
-            "ref_id": bib['ref_id'],
-            "paper_id": paper_id,
-            "title": bib['title'],
-            "year": bib['year'],
-            "venue": bib['venue'],
-            "issn": bib['issn']
-        }
-    }
+    ref_id:str = clean_str(bib['ref_id'])
+    journal_name = clean_str(bib['venue'])
 
-    bib_rid:str = None
-    record: OrientRecord = client.record_create(BIB_ENTRY_CLUSTER, vertex)
-    bib_rid = get_rid(record)
+    def _find_edge(author_rid:str) -> str:
+        record:OrientRecord = client.query("SELECT * FROM Citation WHERE ref_id = '{0}' AND author = {1} AND paper = {2}", \
+            ref_id, author_rid, paper_rid)
 
-    #bib authors
-    if 'authors' in bib:
-        authors = bib['authors']
-        for auth in authors:
-            author_rid = insert_author(auth)
-            bib_edge = create_author_bib_edge(author_rid, bib_rid)
+        if record and len(record) > 0:
+            return record[0]._rid
 
-    return bib_rid
+        return None
 
+    def _create(author_rid:str) -> str:      
+        o = Citation()
+        o.author = author_rid
+        o.paper = paper_rid
+        o.ref_id = ref_id
+        o.title = clean_str(bib['title']),
+        o.year = to_int(bib['year'])
+        o.issn = clean_str(bib['issn'])
+
+        record = client.record_create(CITATION_CLUSTER, {
+            "@Citation": o.__dict__
+        })
+
+        return record._rid
+
+    rids = []
+
+    for author in bib['authors']:
+        author_rid:str = insert_author(author)
+        citation_rid = _find_edge(author_rid)
+        if citation_rid == None:
+            rids.append( _create(author_rid) )
+        else:
+            continue
+
+    return rids
+    
 def insert_paper(data) -> str:
-    paper_id:str = data['paper_id']
-    metadata:str = data['metadata']  
-    title:str = metadata['title']
+    paper_id:str = clean_str(data['paper_id'])
+    metadata:Dict = data['metadata']  
+    title:str = clean_str(metadata['title'])
     title_short:str = title[0:50]
-    authors: List = metadata['authors']
-    bib_entries: List = data['bib_entries']
+    bib_entries:List = data['bib_entries']
     paper_rid:str = None
+    record: OrientRecord = None
 
     abstracts = []
     for ab in data['abstract']:
@@ -292,7 +309,8 @@ def insert_paper(data) -> str:
 
     full_text = " ".join(body_text)
 
-    paper = Paper(paper_id)
+    paper:Paper = Paper()
+    paper.paper_id = paper_id
     paper.title = title
     paper.abstract = abstract
     paper.body_text = full_text
@@ -302,12 +320,9 @@ def insert_paper(data) -> str:
         "@Paper": paper.__dict__
     }
 
-    paper_rid:str = None
-    record: OrientRecord = None
-
-    papers = client.query(str.format("select * from Paper where paper_id = '{0}'", paper_id))
+    papers = client.query(str.format("SELECT * FROM Paper WHERE paper_id = '{0}'", paper_id))
     # update
-    if papers != None and len(papers) > 0:
+    if papers and len(papers) > 0:
         record = papers[0]
         paper_rid = record._rid
         version = record._version
@@ -318,16 +333,14 @@ def insert_paper(data) -> str:
         paper_rid = get_rid(record)
 
     # authors
-    for auth in authors:      
+    paper_authors: List = metadata['authors']
+    for auth in paper_authors:      
         author_rid:str = insert_author(auth)
-        create_paper_author_edge(paper_rid, author_rid)
+        create_authoredby_edge(author_rid, paper_rid)
         
-    # bib entries
-    for bibs in bib_entries:
-        bib = bib_entries[bibs]
-        bib_rid = insert_bib_entry(paper_id, bib)
-        # create edge between paper and bib entry
-        create_paper_bib_edge(paper_rid, bib_rid)
+    # bib entries (citations)
+    for entry in bib_entries: 
+        create_citation_edges(paper_rid, bib_entries[entry])
 
     return paper_rid
     # def
@@ -410,11 +423,33 @@ def authors_to_list(s:str) -> List:
     
     return s
 
+def insert_journal(name:str) -> str:
+    name = clean_str(name)
+
+    if name == None:
+        return None
+
+    name = name.replace("'", "")
+    name = name.replace("\\", "")
+    record: OrientRecord = client.query(str.format("SELECT * FROM Journal WHERE name = '{0}'", name))
+
+    if record and len(record) > 0:
+        return record[0]._rid
+
+    vertex = {
+        "@Journal": {
+            "name": name
+        }
+    }
+
+    record = client.record_create(JOURNAL_CLUSTER, vertex)
+    return record._rid
+
 def insert_csv_paper_model(index, row):
 
     def _insert(vertex):
-        record = client.record_create(PAPER_CLUSTER, vertex)  
-        return get_rid(record)
+        record: OrientRecord = client.record_create(PAPER_CLUSTER, vertex)  
+        return record._rid
 
     def _is_correction(title:str) -> bool:
         # update paper if title starts with "Correction:..."
@@ -432,8 +467,10 @@ def insert_csv_paper_model(index, row):
     if rx_retracted and rx_retracted.group() in ['retracted:']:
         return None
 
-    paper: Paper = Paper(paper_id)
+    paper:Paper = Paper()
+    paper.paper_id = paper_id
     paper.title = title
+    paper.title_short = title[0:50]
     paper.doi = clean_str(row.doi)
     paper.source_x = clean_str(row.source_x)
     paper.pmcid = clean_str(row.pmcid)
@@ -441,20 +478,18 @@ def insert_csv_paper_model(index, row):
     paper.license = clean_str(row.license)
     paper.abstract = clean_str(row.abstract)
     paper.publish_time = clean_str(row.publish_time)
-    paper.journal = clean_str(row.journal)
     paper.ms_paper_id = clean_str(row['Microsoft Academic Paper ID'])
     paper.who_covidence = clean_str(row['WHO #Covidence'])
     paper.has_full_text = to_bool(row.has_full_text)
-    authors:List = authors_to_list(row.authors)
 
     vertex = {
         "@Paper": paper.__dict__
     }
 
-    records = client.query(str.format("select * from Paper where paper_id = '{0}'", paper_id))
+    records = client.query(str.format("SELECT * FROM Paper WHERE paper_id = '{0}'", paper_id))
 
     # update
-    if records != None and len(records) > 0:
+    if records and len(records) > 0:
         record: OrientRecord = records[0]
         paper_rid = record._rid
         version = record._version
@@ -462,15 +497,25 @@ def insert_csv_paper_model(index, row):
         if _is_correction(record.title) and not _is_correction(paper.title):
             return record._rid
         else:        
-            success = client.record_update(paper_rid, paper_rid, vertex, version)
-            return paper_rid
+            record = client.record_update(paper_rid, paper_rid, vertex, version)
+            return record._rid
     
     # insert
     paper_rid = _insert(vertex)
 
-    for auth in authors:
-        author_rid = insert_author(auth)
-        create_paper_author_edge(paper_rid, author_rid)
+    # insert journal
+    journal = clean_str(row.journal)
+    if journal != None:
+        journal_rid = insert_journal(journal)
+        create_publishedby_edge(paper_id, journal_rid)
+
+    # list of authors is more complete in JSON files
+    # only insert authors if there is no JSON file with full body text
+    if not paper.has_full_text:
+        authors:List = authors_to_list(row.authors)
+        for auth in authors:
+            author_rid = insert_author(auth)
+            create_authoredby_edge(author_rid, paper_rid)
 
     return paper_rid
 
@@ -482,9 +527,9 @@ def import_csv_metadata():
         print(paper_rid)
 
 # step 1
-#import_csv_metadata()
+import_csv_metadata()
 
 # step 2 - update papers with body text from JSON files, etc.
-import_json_files()
+#import_json_files()
 
 client.close()
