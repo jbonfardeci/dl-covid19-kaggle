@@ -8,39 +8,40 @@ Node = declarative.declarative_node()
 Relationship = declarative.declarative_relationship()
 
 class Journal(Node):
-    name = String()
-    impact_factor = Float()
+    name = None
+    impact_factor = None
 
 class Paper(Node):
-    paper_id = String()
-    title = String()
-    title_short = String()
-    abstract = String()
-    body_text = String()
-    doi = String()
-    has_full_text = Boolean()
-    license = String()
-    ms_paper_id = String()
-    pmcid = String()
-    pubmed_id = String()
-    source_x = String()
-    who_covidence = String()
-    publish_time = String()
+    paper_id = None
+    title = None
+    title_short = None
+    abstract = None
+    body_text = None
+    doi = None
+    has_full_text = None
+    license = None
+    ms_paper_id = None
+    pmcid = None
+    pubmed_id = None
+    source_x = None
+    who_covidence = None
+    publish_time = None
+    authors = None
 
 class Author(Node):
-    hash_id = String()
-    first = String()
-    last = String()
-    middle = String()
-    suffix = String()
-    email = String()
-    impact_factor = Float()
+    hash_id = None
+    first = None
+    last = None
+    middle = None
+    suffix = None
+    email = None
+    impact_factor = None
 
 class Institution(Node):
-    hash_id = String()
-    laboratory = String()
-    institution_name = String()
-    impact_factor = Float()
+    hash_id = None
+    laboratory = None
+    institution_name = None
+    impact_factor = None
 
 class PublishedBy(Relationship):
     # 1-n
@@ -73,7 +74,7 @@ class Citation(Relationship):
     # paper cites many authors and institutions
     _in = Link(Author)
     _out = Link(Paper)
-    ref_id = String()
-    title = String()
-    year = String()
-    issn = String()
+    ref_id = None
+    title = None
+    year = None
+    issn = None

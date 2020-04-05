@@ -14,15 +14,19 @@ client = OrientDB(socket)
 client.db_open(DATABASE_NAME, DB_USER, DB_PWD) # change to your database name
 
 def get_rid(record: OrientRecord) -> str:
-    return record.__dict__['_OrientRecord__rid']
-    
-paper_id = '0a43046c154d0e521a6c425df215d90f3c62681e'
-papers = client.query(str.format("select * from Paper where paper_id = '{0}'", paper_id))
+    return record.__dict__['_OrientRecord__o_storage']['rid']
 
-if len(papers) > 0:
-    rid = get_rid(papers[0])
-    print(rid)
-else:
-    print('not found')
+def get_version(record: OrientRecord) -> str:
+    return record.__dict__['_OrientRecord__o_storage']['version']
+    
+# Citation created from #23:11413 to #22:77 
+#paper_id = '0a43046c154d0e521a6c425df215d90f3c62681e'
+#papers = client.query(str.format("select @rid, paper_id from Paper where paper_id = '{0}'", paper_id))
+
+paper_rid = '#22:77'
+author_rid = '#23:11413'
+record:OrientRecord = client.query("SELECT @rid FROM Citation WHERE _in = #22:77 AND _out = #23:11413")
+
+print(record)
 
 client.close()
