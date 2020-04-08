@@ -61,11 +61,18 @@ def authors_to_list(paper_id:str, s:str):
             "hash_id": None,
             "first": None,
             "last": None,
+            "middle": None
         }
 
         if s.find(',') > -1:
             names = list( map(strip_quotes, s.split(',')) )
-            auth['first'] = names[1]
+            first = re.sub(r'[^a-zA-Z\s\-]', '', names[1], re.DOTALL)
+            tmp = first.split(' ')
+            if len(tmp) > 1:
+                auth['middle'] = tmp.pop()
+                first = trim(' '.join(tmp))
+
+            auth['first'] = first
             auth['last'] = names[0]
 
         else:
@@ -102,7 +109,7 @@ def import_csv_metadata():
         i += 1
 
     
-    author_df = pd.DataFrame(columns=['paper_id', 'hash_id', 'first', 'last'], data=data)
+    author_df = pd.DataFrame(columns=['paper_id', 'hash_id', 'first', 'last', 'middle'], data=data)
     author_df.to_csv("/home/spark/Documents/repos/dl-covid19-kaggle-contest/Data/authors.csv")
 
 import_csv_metadata()
