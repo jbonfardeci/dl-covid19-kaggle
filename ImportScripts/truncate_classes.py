@@ -48,6 +48,5 @@ def confirm_truncate():
             print('Operation cancelled.')
             return False
 
-#confirm_truncate()
-truncate_clusters()
+confirm_truncate()
 

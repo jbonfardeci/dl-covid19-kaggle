@@ -92,7 +92,7 @@ def authors_to_list(paper_id:str, s:str):
 
 
 def import_csv_metadata():
-    file_path = "/home/spark/Documents/repos/dl-covid19-kaggle-contest/Data/all_sources_metadata_2020-03-13_clean.csv"
+    file_path = "C:\\Users\\bonfardeci-j\\source\\dl-covid19-kaggle-contest\\Data\\all_sources_metadata_2020-03-13_clean.csv"
     df = pd.read_csv(file_path)
     authors = df[['sha', 'authors', 'has_full_text']].values.tolist()
     
@@ -100,16 +100,15 @@ def import_csv_metadata():
 
     i = 0
     for row in authors:
-        if to_bool(row[2]) or str(row[1]) == 'nan':
-            continue
+        if to_bool(row[2]) and str(row[1]) != 'nan':
+            paper_id = str.format('na_paper_id_{0}', i) if str(row[0]) == 'nan' else row[0]
+            lst = authors_to_list(paper_id, row[1])
+            data.extend(lst)
         
-        paper_id = str.format('na_paper_id_{0}', i) if str(row[0]) == 'nan' else row[0]
-        lst = authors_to_list(paper_id, row[1])
-        data.extend(lst)
         i += 1
 
     
     author_df = pd.DataFrame(columns=['paper_id', 'hash_id', 'first', 'last', 'middle'], data=data)
-    author_df.to_csv("/home/spark/Documents/repos/dl-covid19-kaggle-contest/Data/authors.csv")
+    author_df.to_csv("C:\\Users\\bonfardeci-j\\source\\dl-covid19-kaggle-contest\\Data\\authors.csv")
 
 import_csv_metadata()
