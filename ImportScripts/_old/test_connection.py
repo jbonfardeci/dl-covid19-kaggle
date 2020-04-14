@@ -5,8 +5,8 @@ from PySocket import PySocket
 HOST = "localhost"
 PORT = 2424
 DATABASE_NAME = "Covid19"
-DB_USER = "admin"
-DB_PWD = "admin"
+DB_USER = ""
+DB_PWD = ""
 
 socket = PySocket(HOST, PORT)
 socket.connect()

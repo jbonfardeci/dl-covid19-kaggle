@@ -74,11 +74,11 @@ def hash_author(author):
 
     combined = str.format("{0}{1}{2}{3}{4}", f, l, m, s, e)
     hashed = hashlib.md5(combined.encode())
-    return hashed.hexdigest()
+    return str(hashed.hexdigest())
 
 def hash_strings(strings):
     a = [trim(s) for s in strings if not is_empty(s)]
-    return hashlib.md5(''.join(a).encode()).hexdigest()
+    return str(hashlib.md5(''.join(a).encode()).hexdigest())
 
 def convert_to_json(contents):
     return json.loads(contents)

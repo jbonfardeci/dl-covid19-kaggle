@@ -1,18 +1,4 @@
-﻿<#
-    Options:  
-    -dir : directory read CSV data sets from
-    -del : Delimiter. Default = ","
-    -s : The full database server address
-    -c : database name
-    -tbl : table name
-    -q : SQL file to create table
-    -src : data source filename
-    -u : SQL auth database username
-    -p : SQL auth database password
-    -t : if using trusted database connection. Default = FALSE
-    -help
-#>
-# change the $vars to your setup.
+﻿# change the $vars to your setup.
 
 $conf = @{
     tableName = "AllSourcesMetadata";
@@ -30,85 +16,6 @@ $conf = @{
 
 # Load EasyCsv library
 [System.Reflection.Assembly]::LoadFrom($conf.dllPath);
-
-$break = $false;
-
-# Parse command line arguments.
-for($i=0; $i -lt $args.Length; $i++){
-    $arg = $args[$i];
-    $next_arg = $args[$i+1];
-
-    switch($arg){
-        "-help"{
-            write-host "  
-            -dir : directory read CSV data sets from
-            -del : Delimiter. Default = ","
-            -s : The full database server address
-            -c : database name
-            -tbl : table name
-            -q : SQL file to create table
-            -src : data source filename
-            -u : SQL auth database username
-            -p : SQL auth database password
-            -t : if using trusted database connection. Default = FALSE
-            -help";
-            $break = $true;
-        }
-        "-dir"{
-            $conf.dir = $next_arg;
-        }
-        "-del"{
-            $conf.delimiter = $next_arg;
-        }
-        "-s" { 
-            $conf.server = $next_arg; 
-        }
-        "-c" { 
-            $conf.dbname = $next_arg; 
-        }
-        "-src" {
-            $conf.source = $next_arg;
-        }
-        "-tbl" {
-            $conf.tableName = $next_arg;
-        }
-        "-q" {
-            $conf.sql = $next_arg;
-        }
-        "-u" { 
-            $conf.username = $next_arg;
-            $conf.is_trusted_conn = $false;
-        }
-        "-p" { 
-            $conf.pwd = $next_arg;
-            $conf.is_trusted_conn = $false;
-        }
-        "-t" { 
-            $conf.is_trusted_conn = $true;
-            if($conf.username.Length -gt 0 -or $conf.pwd.Length -gt 0){
-                write-error "Warning: setting trusted connection will override SQL authentication with username and password.";
-            }
-        }
-        "-truncate"{
-            $conf.truncate = ($next_arg -match "true");
-        }
-    }
-}
-
-if($break){
-    return;
-}
-
-if($conf.server.Length -eq 0){
-    throw 'Error: The server name (-s) is required.';
-}
-elseif($conf.dbname.Length -eq 0){
-    throw 'Error: The database name (-c) is required.';
-}
-elseif(-not $conf.is_trusted_conn -and ($conf.username.Length -eq 0 -or $conf.pwd.Length -eq 0) ){
-	throw 'Error: SQL auth username (-u) and password (-p) are required if not using trusted connection (-t).';
-}
-
 
 $connectionString = "Data Source=" + $conf.server + "; Initial Catalog=" + $conf.dbname + ";";
 
@@ -131,7 +38,7 @@ function execute_sql($query){
 }
 
 # Import CSV file
-function importCsv($path, $tableName, $delimiter, $headerRowCount = 1, $colNames = $null, $batchSize = 50000, $timeOut = 1500){
+function importCsv($path, $tableName, $delimiter, $headerRowCount = 1, $colNames = $null, $batchSize = 1000, $timeOut = 1500){
     $csv = Test-Path $path -ErrorAction Stop
     $success = $false;
 
