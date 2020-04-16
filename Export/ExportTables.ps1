@@ -12,7 +12,7 @@ function exportCsv($path, $connectionString, $queryString){
     return $success;
 }
 
-$tables = @("dbo.AllPapers", "dbo.Author", "dbo.Journal", "dbo.Institution", "dbo.Authored", "dbo.PublishedBy", "dbo.Citation", "dbo.Affiliation")
+$tables = @("dbo.AllPapers", "dbo.Author", "dbo.JournalMapping", "dbo.Institution", "dbo.Authored", "dbo.PublishedBy", "dbo.Citation", "dbo.Affiliation")
 
 foreach($table in $tables){
     $path = [string]::Format($outputDir, "$table.csv");
