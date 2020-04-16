@@ -1,0 +1,3 @@
+﻿CREATE LOGIN [covid19]
+    WITH PASSWORD = N'tdgPY>7`lck%zxxdIhwca|fomsFT7_&#$!~<sauk;g5klTya', SID = 0x520615226595D24FB3A16F7B5ABC7205, DEFAULT_DATABASE = [covid19], DEFAULT_LANGUAGE = [us_english], CHECK_POLICY = OFF;
+

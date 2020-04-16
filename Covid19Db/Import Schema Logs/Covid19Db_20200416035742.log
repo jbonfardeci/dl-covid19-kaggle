@@ -1,0 +1,87 @@
+4/16/2020 10:57:42 AM	This log contains information about the import schema operation into project 'Covid19Db' on computer 'ZBOOK27' by user 'bonfardeci-j'.
+4/16/2020 10:57:42 AM	Import of database schema has started.
+4/16/2020 10:57:57 AM	Gathering database credentials
+4/16/2020 10:57:57 AM	Gathering database options
+4/16/2020 10:57:57 AM	Gathering generic database scoped configuration option
+4/16/2020 10:57:57 AM	Gathering users
+4/16/2020 10:57:57 AM	Gathering roles
+4/16/2020 10:57:57 AM	Gathering application roles
+4/16/2020 10:57:57 AM	Gathering role memberships
+4/16/2020 10:57:57 AM	Gathering filegroups
+4/16/2020 10:57:57 AM	Gathering full-text catalogs
+4/16/2020 10:57:57 AM	Gathering assemblies
+4/16/2020 10:57:57 AM	Gathering certificates
+4/16/2020 10:57:57 AM	Gathering asymmetric keys
+4/16/2020 10:57:57 AM	Gathering symmetric keys
+4/16/2020 10:57:57 AM	Gathering encrypted symmetric keys
+4/16/2020 10:57:57 AM	Gathering schemas
+4/16/2020 10:57:57 AM	Gathering XML schema collections
+4/16/2020 10:57:57 AM	Gathering user-defined data types
+4/16/2020 10:57:57 AM	Gathering user-defined types
+4/16/2020 10:57:57 AM	Gathering table types
+4/16/2020 10:57:57 AM	Gathering unique keys for table types
+4/16/2020 10:57:57 AM	Gathering primary keys for table types
+4/16/2020 10:57:57 AM	Gathering indexes for table types
+4/16/2020 10:57:57 AM	Gathering check constraints for table types
+4/16/2020 10:57:57 AM	Gathering default constraints for table types
+4/16/2020 10:57:57 AM	Gathering partition functions
+4/16/2020 10:57:57 AM	Gathering partition schemes
+4/16/2020 10:57:57 AM	Gathering functions
+4/16/2020 10:57:57 AM	Gathering encrypted functions
+4/16/2020 10:57:57 AM	Gathering aggregates
+4/16/2020 10:57:57 AM	Gathering procedures
+4/16/2020 10:57:58 AM	Gathering encrypted procedures
+4/16/2020 10:57:58 AM	Gathering tables
+4/16/2020 10:57:59 AM	Gathering primary keys
+4/16/2020 10:57:59 AM	Gathering unique constraints
+4/16/2020 10:57:59 AM	Gathering foreign keys
+4/16/2020 10:57:59 AM	Gathering default constraints
+4/16/2020 10:57:59 AM	Gathering check constraints
+4/16/2020 10:57:59 AM	Gathering views
+4/16/2020 10:58:00 AM	Gathering encrypted views
+4/16/2020 10:58:00 AM	Gathering indexes
+4/16/2020 10:58:00 AM	Gathering statistics
+4/16/2020 10:58:00 AM	Gathering full-text index stoplists
+4/16/2020 10:58:00 AM	Gathering search property lists
+4/16/2020 10:58:00 AM	Gathering search properties
+4/16/2020 10:58:00 AM	Gathering full-text indexes
+4/16/2020 10:58:00 AM	Gathering column store indexes
+4/16/2020 10:58:00 AM	Gathering spatial indexes
+4/16/2020 10:58:00 AM	Gathering XML indexes
+4/16/2020 10:58:00 AM	Gathering Selective XML indexes
+4/16/2020 10:58:00 AM	Gathering encrypted triggers
+4/16/2020 10:58:00 AM	Gathering triggers
+4/16/2020 10:58:00 AM	Gathering encrypted and clr ddl triggers
+4/16/2020 10:58:00 AM	Gathering ddl triggers
+4/16/2020 10:58:00 AM	Creating edge constraints
+4/16/2020 10:58:00 AM	Gathering synonyms
+4/16/2020 10:58:00 AM	Gathering defaults
+4/16/2020 10:58:00 AM	Gathering data constraint uddt bindings
+4/16/2020 10:58:00 AM	Gathering rules
+4/16/2020 10:58:00 AM	Gathering data constraint uddt bindings
+4/16/2020 10:58:00 AM	Gathering message types
+4/16/2020 10:58:00 AM	Gathering queues
+4/16/2020 10:58:00 AM	Gathering contracts
+4/16/2020 10:58:00 AM	Gathering services
+4/16/2020 10:58:00 AM	Gathering event notifications
+4/16/2020 10:58:00 AM	Gathering remote service bindings
+4/16/2020 10:58:00 AM	Gathering broker priorities
+4/16/2020 10:58:00 AM	Gathering signatures
+4/16/2020 10:58:00 AM	Gathering data compression options
+4/16/2020 10:58:00 AM	Gathering sequence types
+4/16/2020 10:58:00 AM	Gathering security policies
+4/16/2020 10:58:00 AM	Gather column encryption keys
+4/16/2020 10:58:00 AM	Gathering column master keys
+4/16/2020 10:58:00 AM	Gathering external data sources
+4/16/2020 10:58:00 AM	Gathering external file formats
+4/16/2020 10:58:00 AM	Gathering external tables
+4/16/2020 10:58:00 AM	Gathering extended properties
+4/16/2020 10:58:03 AM	Gathering credentials
+4/16/2020 10:58:03 AM	Gathering logins
+4/16/2020 10:58:03 AM	Gathering server audits
+4/16/2020 10:58:04 AM	An exception was encountered while attempting to retrieve the default data path: ''.  As a result, absolute paths may appear in ADD FILE statements.
+4/16/2020 10:58:04 AM	Scanning project for duplicate elements
+4/16/2020 10:58:04 AM	Finished duplicate element processing
+4/16/2020 10:58:06 AM	Finished importing database.
+4/16/2020 10:58:06 AM	A summary of the import was saved to the following location: C:\Users\bonfardeci-j\source\repos\Covid19Db\Import Schema Logs\Covid19Db_20200416035742.log
+4/16/2020 10:58:06 AM	Click Finish to continue...

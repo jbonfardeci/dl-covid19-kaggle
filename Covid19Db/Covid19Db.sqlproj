@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <Name>Covid19Db</Name>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>4.1</ProjectVersion>
+    <ProjectGuid>{424674bb-a629-457b-be18-a1d895767326}</ProjectGuid>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
+    <OutputType>Database</OutputType>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>Covid19Db</RootNamespace>
+    <AssemblyName>Covid19Db</AssemblyName>
+    <ModelCollation>1033,CI</ModelCollation>
+    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+    <DeployToDatabase>True</DeployToDatabase>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetLanguage>CS</TargetLanguage>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <SqlServerVerification>False</SqlServerVerification>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <TargetDatabaseSet>True</TargetDatabaseSet>
+    <DefaultCollation>SQL_Latin1_General_CP1_CI_AS</DefaultCollation>
+    <DefaultFilegroup>PRIMARY</DefaultFilegroup>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <OutputPath>bin\Release\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <OutputPath>bin\Debug\</OutputPath>
+    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
+    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+  </PropertyGroup>
+  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+  <ItemGroup>
+    <Folder Include="Properties" />
+    <Folder Include="dbo\" />
+    <Folder Include="dbo\Tables\" />
+    <Folder Include="import\" />
+    <Folder Include="import\Tables\" />
+    <Folder Include="dbo\Views\" />
+    <Folder Include="Security\" />
+    <Folder Include="dbo\Functions\" />
+    <Folder Include="dbo\Stored Procedures\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Build Include="dbo\Tables\JRankByScopus.sql" />
+    <Build Include="dbo\Tables\Institution.sql" />
+    <Build Include="dbo\Tables\KeywordCountsUnpivot.sql" />
+    <Build Include="dbo\Tables\Authored.sql" />
+    <Build Include="dbo\Tables\PublishedBy.sql" />
+    <Build Include="dbo\Tables\PaperKeywordRankByQuestion.sql" />
+    <Build Include="import\Tables\journalsSUBMISSIONV3.sql" />
+    <Build Include="import\Tables\paper_kmeans_clusters.sql" />
+    <Build Include="dbo\Tables\AllPapers.sql" />
+    <Build Include="dbo\Tables\JournalMapping.sql" />
+    <Build Include="dbo\Tables\KeywordCounts.sql" />
+    <Build Include="import\Tables\journalsSUBMISSIONV2.sql" />
+    <Build Include="dbo\Tables\KeywordTFIDF.sql" />
+    <Build Include="dbo\Tables\JRanked.sql" />
+    <Build Include="dbo\Tables\JRankBySJR.sql" />
+    <Build Include="import\Tables\authors.sql" />
+    <Build Include="dbo\Tables\Question.sql" />
+    <Build Include="dbo\Tables\Author.sql" />
+    <Build Include="dbo\Tables\ref_word_delimiters.sql" />
+    <Build Include="dbo\Tables\Affiliation.sql" />
+    <Build Include="dbo\Tables\Citation.sql" />
+    <Build Include="dbo\Tables\JByPubMed.sql" />
+    <Build Include="import\Tables\author_scores_total.sql" />
+    <Build Include="dbo\Tables\Journal.sql" />
+    <Build Include="dbo\Tables\IRankBySIR.sql" />
+    <Build Include="dbo\Views\vw_journals_ranked_scopus.sql" />
+    <Build Include="dbo\Views\vw_journals_ranked_combined.sql" />
+    <Build Include="dbo\Views\vw_papers_ranked_byjournal_count.sql" />
+    <Build Include="dbo\Views\vw_KeywordRankByQuestion.sql" />
+    <Build Include="dbo\Views\vw_Question01.sql" />
+    <Build Include="dbo\Views\vw_Question03.sql" />
+    <Build Include="dbo\Views\vw_Question04.sql" />
+    <Build Include="dbo\Views\vw_Question05.sql" />
+    <Build Include="dbo\Views\vw_Question06.sql" />
+    <Build Include="dbo\Views\vw_Question07.sql" />
+    <Build Include="dbo\Views\vw_Question08.sql" />
+    <Build Include="dbo\Views\vw_Question09.sql" />
+    <Build Include="dbo\Views\vw_Question10.sql" />
+    <Build Include="dbo\Views\vw_KeywordTDIFSums.sql" />
+    <Build Include="dbo\Views\vw_author_ranked_aif.sql" />
+    <Build Include="dbo\Views\vw_papers_ranked_byjournal.sql" />
+    <Build Include="dbo\Views\vw_papers.sql" />
+    <Build Include="dbo\Views\vw_papers_sample_1000.sql" />
+    <Build Include="dbo\Views\vw_papers_sample_100.sql" />
+    <Build Include="dbo\Views\vw_institutitions_ranked_sir.sql" />
+    <Build Include="dbo\Views\vw_journals_ranked_sjr.sql" />
+    <Build Include="dbo\Views\vw_journals_issn.sql" />
+    <Build Include="Security\covid19.sql" />
+    <Build Include="Security\covid19_1.sql" />
+    <Build Include="Security\RoleMemberships.sql" />
+    <Build Include="dbo\Functions\Metaphone.sql" />
+    <Build Include="dbo\Functions\fn_CountOccurrences.sql" />
+    <Build Include="dbo\Functions\fn_GetKeywordCounts.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdatePaperRanks.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdatePaperKeyworRanks.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdateKmeansClusters.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdateJournalsFromIMport.sql" />
+    <Build Include="dbo\Stored Procedures\usp_get_question1_results.sql" />
+    <Build Include="dbo\Stored Procedures\usp_UpdateJournalTableFromImport.sql" />
+    <Build Include="dbo\Stored Procedures\usp_create_jrankedtablefromview.sql" />
+    <Build Include="Security\import.sql" />
+  </ItemGroup>
+</Project>
