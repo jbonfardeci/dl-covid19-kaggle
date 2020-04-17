@@ -2,16 +2,16 @@
 
 $conf = @{
     tableName = "AllSourcesMetadata";
-    sql = "C:\Users\bonfardeci-j\source\repos\dl\covid19_kaggle\Tables\all_sources_metadata.sql";
-    source = "C:\Users\bonfardeci-j\source\repos\dl\covid19_kaggle\Data\all_sources_metadata_2020-03-13_clean.csv";
-    server = "zbook27\mssqlserver17";
+    sql = $null;
+    source = "../Data/all_sources_metadata_2020-03-13_clean.csv";
+    server = ".\mssqlserver17";
     dbname = "covid19";
     username = $null; 
     pwd = $null;
     is_trusted_conn = $true;
     delimiter = ",";
     truncate = $false;
-    dllPath = "C:\Users\bonfardeci-j\source\repos\dl\covid19_kaggle\bin\EasyCsvLib.dll";
+    dllPath = "../bin/EasyCsvLib.dll";
 }
 
 # Load EasyCsv library
@@ -22,7 +22,7 @@ $connectionString = "Data Source=" + $conf.server + "; Initial Catalog=" + $conf
 if($conf.is_trusted_conn) {
     $connectionString += "Trusted_Connection=True;";
 } else {
-    $connectionString += "User Id="+ $conf.username +"; Password=" + $conf.pwd + "; Trusted_Connection=False; Encrypt=True;"
+    $connectionString += "User Id="+ $conf.username +"; Password=" + $conf.pwd + "; Trusted_Connection=False; Encrypt=False;"
 }
 
 function execute_sql($query){

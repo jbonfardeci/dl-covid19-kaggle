@@ -1,7 +1,27 @@
-﻿[System.Reflection.Assembly]::LoadFrom("C:\mahso\bin\EasyCsvLib.dll");
+﻿
 
-$outputDir = "C:\Users\bonfardeci-j\Desktop\covid-19\csv\{0}";
-$connectionString = "Server=zbook27\mssqlserver17;Database=covid19;Trusted_Connection=yes;";
+$outputDir = "C:\Users\bonfardeci-j\source\dl-covid19-kaggle-contest\Data\{0}";
+
+$conf = @{
+    server = "10.24.1.181";
+    dbname = "covid19";
+    username = "covid19"; 
+    pwd = "Welcome2DL!";
+    is_trusted_conn = $false;
+    delimiter = ",";
+    dllPath = "C:\mahso\bin\EasyCsvLib.dll";
+}
+
+# Load EasyCsv library
+[System.Reflection.Assembly]::LoadFrom($conf.dllPath);
+
+$connectionString = "Data Source=" + $conf.server + "; Initial Catalog=" + $conf.dbname + ";";
+
+if($conf.is_trusted_conn) {
+    $connectionString += "Trusted_Connection=True;";
+} else {
+    $connectionString += "User Id="+ $conf.username +"; Password=" + $conf.pwd + "; Trusted_Connection=False; Encrypt=False;"
+}
 
 function exportCsv($path, $connectionString, $queryString){
     $success = $false;
@@ -12,7 +32,8 @@ function exportCsv($path, $connectionString, $queryString){
     return $success;
 }
 
-$tables = @("dbo.AllPapers", "dbo.Author", "dbo.JournalMapping", "dbo.Institution", "dbo.Authored", "dbo.PublishedBy", "dbo.Citation", "dbo.Affiliation")
+#$tables = @("dbo.AllPapers", "dbo.Author", "dbo.JournalMapping", "dbo.Institution", "dbo.Authored", "dbo.PublishedBy", "dbo.Citation", "dbo.Affiliation")
+$tables = @("dbo.vw_TableauTable");
 
 foreach($table in $tables){
     $path = [string]::Format($outputDir, "$table.csv");
