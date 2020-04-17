@@ -1,5 +1,5 @@
 ﻿
-create procedure [dbo].[usp_UpdatePaperRanks] as
+--create procedure [dbo].[usp_UpdatePaperRanks] as
 
 /*
 	Normalize numbers from 0-1
@@ -9,7 +9,7 @@ create procedure [dbo].[usp_UpdatePaperRanks] as
 	select
 		paper_id
 		, x as AuthorRank
-		, (x - min(x) over()) / nullif(max(x) over() - min(x) over(), 1) as AuthorRankNormal
+		, (x - min(x) over()) / nullif(max(x) over() - min(x) over(), 0) as AuthorRankNormal
 	from (
 		select
 			p.paper_id
@@ -43,8 +43,11 @@ create procedure [dbo].[usp_UpdatePaperRanks] as
 		from
 			dbo.AllPapers as p
 
+			inner join dbo.JournalMapping as jm
+				on p.journal = jm.JournalNameInData
+
 			left join dbo.vw_journals_ranked_combined as jr
-				on p.JournalId = jr.JournalId
+				on jm.Id = jr.JournalId
 	) as t
 )
 

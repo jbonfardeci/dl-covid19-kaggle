@@ -1,5 +1,5 @@
 -- select top 100 * from dbo.vw_TableauTable
-create view dbo.vw_TableauTable as 
+alter view dbo.vw_TableauTable as 
 
 with inst as (
     select 
@@ -52,20 +52,20 @@ select
     p.paper_id
     , isnull(p.title, 'N/A') as Title
     , isnull(p.Abstract, 'N/A') as Abstract 
-    , isnull(body_text, 'N/A') as BodyText
+   -- , isnull(body_text, 'N/A') as BodyText
     , coalesce(jm.StandardJournalName, jm.JournalNameInData, 'N/A') as Journal
     , ag.Authors
-    , p.AuthorRank
-    , p.AuthorRankNormal
-    , p.JournalRank
-    , p.JournalRankNormal
+    , isnull(p.AuthorRank,0) as AuthorRank
+    , isnull(p.AuthorRankNormal,0) as AuthorRankNormal
+    , isnull(p.JournalRank,0) as JournalRank
+    , isnull(p.JournalRankNormal,0) as JournalRankNormal
     , p.Recency
-    , p.RecencyNormal
-    , p.CitedAuthorsRank
-    , p.CitedAuthorsRankNormal
+    , isnull(p.RecencyNormal,0) as RecencyNormal
+    , isnull(p.CitedAuthorsRank,0) as CitedAuthorsRank
+    , isnull(p.CitedAuthorsRankNormal,0) as CitedAuthorsRankNormal
     , inst.AuthorInstitutions
-    , p.CitedInstitutionRank as AuthorInstitutionsRank
-    , p.CitedInstitutionRankNormal as AuthorInstitutionsRankNormal
+    , isnull(p.CitedInstitutionRank,0) as AuthorInstitutionsRank
+    , isnull(p.CitedInstitutionRankNormal,0) as AuthorInstitutionsRankNormal
     , p.KmeansCluster
     , Q01KeywordCount
     , Q02KeywordCount
@@ -79,14 +79,14 @@ select
 from 
     dbo.AllPapers as p
     
-    inner join kw
+    left join kw
         on p.paper_id = kw.paper_id
 
-    inner join dbo.AuthorsAgg as ag 
+    left join dbo.AuthorsAgg as ag 
         on p.paper_id = ag.paper_id
 
     left join dbo.JournalMapping as jm 
-        on p.JournalId = jm.Id
+        on jm.JournalNameInData = p.journal
 
     left join inst 
         on p.paper_id = inst.paper_id
